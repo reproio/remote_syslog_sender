@@ -16,6 +16,9 @@ module RemoteSyslogSender
       @ssl_method      = options[:ssl_method] || 'TLSv1_2'
       @ca_file         = options[:ca_file]
       @verify_mode     = options[:verify_mode]
+      @client_cert     = options[:client_cert]
+      @client_cert_key = options[:client_cert_key]
+      @client_cert_key_pass = options[:client_cert_key_pass]
       @timeout         = options[:timeout] || 600
       @timeout_exception   = !!options[:timeout_exception]
       @exponential_backoff = !!options[:exponential_backoff]
@@ -64,13 +67,13 @@ module RemoteSyslogSender
           if @tls
             require 'openssl'
             context = OpenSSL::SSL::SSLContext.new(@ssl_method)
-            context.ca_file = @ca_file if @ca_file
             context.verify_mode = @verify_mode if @verify_mode
-
+            context.cert = OpenSSL::X509::Certificate.new(File.open(@client_cert) { |f| f.read }) if @client_cert 
+            context.key = OpenSSL::PKey::RSA.new(File.open(@client_cert_key) { |f| f.read }, @client_cert_key_pass) if @client_cert_key
+            context.ca_file = @ca_file if @ca_file
             @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
             @socket.connect
             @socket.post_connection_check(@remote_hostname)
-            raise "verification error" if @socket.verify_result != OpenSSL::X509::V_OK
           else
             @socket = @tcp_socket
           end
