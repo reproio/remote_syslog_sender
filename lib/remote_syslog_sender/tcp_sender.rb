@@ -88,11 +88,14 @@ module RemoteSyslogSender
             context = OpenSSL::SSL::SSLContext.new()
             if min_max_available
               case
-                when @ssl_min_version && @ssl_max_version
-                  context.min_version = @ssl_min_version
-                  context.max_version = @ssl_max_version
-                when (!@ssl_min_version && @ssl_max_version) || (@ssl_min_version && !@ssl_max_version)
-                  raise "Both :ssl_min_version and :ssl_max_version must be set if one is"
+              when @ssl_min_version && @ssl_max_version
+                context.min_version = @ssl_min_version
+                context.max_version = @ssl_max_version
+              when (!@ssl_min_version && @ssl_max_version) || (@ssl_min_version && !@ssl_max_version)
+                raise "Both :ssl_min_version and :ssl_max_version must be set if one is"
+              when !@ssl_min_version && !@ssl_max_version
+                # Keep the current behaviour
+                context.ssl_version = METHODS_MAP[@ssl_method] || @ssl_method
               else
                 context.min_version = tls_versions_map[@ssl_min_version] || @ssl_min_version
                 context.max_version = tls_versions_map[@ssl_max_version] || @ssl_max_version
