@@ -10,3 +10,4 @@ end
 require 'remote_syslog_sender'
 
 require 'test/unit'
+require 'openssl'
