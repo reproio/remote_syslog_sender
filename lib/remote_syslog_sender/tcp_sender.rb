@@ -1,3 +1,4 @@
+require 'ipaddr'
 require 'socket'
 require 'syslog_protocol'
 require 'remote_syslog_sender/sender'
@@ -19,6 +20,8 @@ module RemoteSyslogSender
       @timeout         = options[:timeout] || 600
       @timeout_exception   = !!options[:timeout_exception]
       @exponential_backoff = !!options[:exponential_backoff]
+
+      @remote_hostname_is_ipaddr = IPAddr.new(remote_hostname) rescue false
 
       @mutex = Mutex.new
       @tcp_socket = nil
@@ -68,6 +71,7 @@ module RemoteSyslogSender
             context.verify_mode = @verify_mode if @verify_mode
 
             @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
+            @socket.hostname = @remote_hostname unless @remote_hostname_is_ipaddr
             @socket.connect
             if @verify_mode != OpenSSL::SSL::VERIFY_NONE
               @socket.post_connection_check(@remote_hostname)
