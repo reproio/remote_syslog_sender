@@ -67,8 +67,10 @@ module RemoteSyslogSender
           if @tls
             require 'openssl'
             context = OpenSSL::SSL::SSLContext.new(@ssl_method)
-            context.ca_file = @ca_file if @ca_file
-            context.verify_mode = @verify_mode if @verify_mode
+            context.set_params({
+              ca_file: @ca_file,
+              verify_mode: @verify_mode
+            }.compact)
 
             @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
             @socket.hostname = @remote_hostname unless @remote_hostname_is_ipaddr
